@@ -1,5 +1,5 @@
 // apps/web/src/App.tsx
-import { Button } from '@{{scope}}/{{lib}}'; // or 'ui'
+import { Button } from '@\@houdinii\/ui'; // or 'ui'
 
 export default function App() {
   return (

@@ -1,6 +1,6 @@
-# {{projectName}}
+# react\-ts\-tailwind\-turbo\-repo\-template
 
-> **Repo name:** `{{repoName}}`
+> **Repo name:** `react\-ts\-tailwind\-turbo\-repo\-template`
 
 A minimal, production‑ready monorepo showcasing a modern React 19 tool‑chain:
 
@@ -128,5 +128,5 @@ pnpm publish --access public   # peerDeps keep bundle size ≪
 
 ## License
 
-MIT © {{userName}} 2025
+MIT © houdinii 2025
 
