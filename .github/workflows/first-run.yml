@@ -26,28 +26,33 @@ jobs:
           echo "repoName=${repo}"    >> "$GITHUB_OUTPUT"
           echo "projectName=${repo}" >> "$GITHUB_OUTPUT"
           echo "userName=${user}"    >> "$GITHUB_OUTPUT"
-          echo "scope=@${user}"      >> "$GITHUB_OUTPUT"
+          echo "scope=@${repo}"      >> "$GITHUB_OUTPUT"
           echo "lib=ui"              >> "$GITHUB_OUTPUT"   # change if needed
 
       # ───────────────────────────────
       # 2.  Replace all placeholders
       # ───────────────────────────────
       - name: ✏️  Replace {{tokens}}
-        env:                              # short env aliases
-          repoName:    ${{ steps.vars.outputs.repoName }}
+        env:
+          repoName: ${{ steps.vars.outputs.repoName }}
           projectName: ${{ steps.vars.outputs.projectName }}
-          userName:    ${{ steps.vars.outputs.userName }}
-          scope:       ${{ steps.vars.outputs.scope }}
-          lib:         ${{ steps.vars.outputs.lib }}
+          userName: ${{ steps.vars.outputs.userName }}
+          scope: ${{ steps.vars.outputs.scope }}
+          lib: ${{ steps.vars.outputs.lib }}
         run: |
-          # Ignore generated code & git internals
-          FILES=$(git ls-files | grep -vE "dist/|.git/")
-          
-          # GNU sed on Linux runner – in‑place (-i) edits
-          sed -i "s/{{repoName}}/${repoName}/g"       $FILES
-          sed -i "s/{{projectName}}/${projectName}/g" $FILES
-          sed -i "s/{{userName}}/${userName}/g"       $FILES
-          sed -i "s/{{scope}}\\/{{lib}}/${scope//\//\\/}\/${lib}/g" $FILES
+          # Build the sed script just once
+          SED_SCRIPT=$(cat <<'EOF'
+          s/{{repoName}}/${repoName}/g;
+          s/{{projectName}}/${projectName}/g;
+          s/{{userName}}/${userName}/g;
+          s/{{scope}}\/{{lib}}/${scope//\//\\/}\/${lib}/g
+          EOF
+          )
+      
+          # ── list *tracked* files, exclude generated dirs, feed to sed ──
+          git ls-files -z \
+          | grep -zvE '(^|/)dist/' \
+          | xargs -0 sed -i -e "$SED_SCRIPT"
 
       # ───────────────────────────────
       # 3.  Remove this workflow file
