@@ -1,0 +1,15 @@
+# .github/workflows/generate.yml
+name: Template generator
+on:
+  push:                              # runs only in newly‑created copy
+    branches: [ main ]
+    paths:   [ ".github/first-run.yml" ]
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          npx rename-project "$GITHUB_REPOSITORY"  
+          rm -rf .github/workflows/generate.yml
+          git add -A && git commit -m "chore: initial project rename"
