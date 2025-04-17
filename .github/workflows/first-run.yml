@@ -1,0 +1,67 @@
+# .github/workflows/first-run.yml
+name: 🔧 First‑run – personalise template
+on:
+  push:
+    branches: [ main, master ]          # default branch of the *generated* repo
+    paths: [ ".github/workflows/first-run.yml" ]   # runs only once
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎️  Check out code
+        uses: actions/checkout@v4
+
+      # ───────────────────────────────
+      # 1.  Derive values from repo URL
+      # ───────────────────────────────
+      - id: vars
+        name: 🔍  Derive repo/user names
+        run: |
+          full="${{ github.repository }}"     # e.g. houdinii/my-new-project
+          user="${full%%/*}"                  # "houdinii"
+          repo="${full##*/}"                  # "my-new-project"
+          
+          echo "repoName=${repo}"    >> "$GITHUB_OUTPUT"
+          echo "projectName=${repo}" >> "$GITHUB_OUTPUT"
+          echo "userName=${user}"    >> "$GITHUB_OUTPUT"
+          echo "scope=@${user}"      >> "$GITHUB_OUTPUT"
+          echo "lib=ui"              >> "$GITHUB_OUTPUT"   # change if needed
+
+      # ───────────────────────────────
+      # 2.  Replace all placeholders
+      # ───────────────────────────────
+      - name: ✏️  Replace {{tokens}}
+        env:                              # short env aliases
+          repoName:    ${{ steps.vars.outputs.repoName }}
+          projectName: ${{ steps.vars.outputs.projectName }}
+          userName:    ${{ steps.vars.outputs.userName }}
+          scope:       ${{ steps.vars.outputs.scope }}
+          lib:         ${{ steps.vars.outputs.lib }}
+        run: |
+          # Ignore generated code & git internals
+          FILES=$(git ls-files | grep -vE "dist/|.git/")
+          
+          # GNU sed on Linux runner – in‑place (-i) edits
+          sed -i "s/{{repoName}}/${repoName}/g"       $FILES
+          sed -i "s/{{projectName}}/${projectName}/g" $FILES
+          sed -i "s/{{userName}}/${userName}/g"       $FILES
+          sed -i "s/{{scope}}\\/{{lib}}/${scope//\//\\/}\/${lib}/g" $FILES
+
+      # ───────────────────────────────
+      # 3.  Remove this workflow file
+      # ───────────────────────────────
+      - name: 🧹  Delete self
+        run: rm .github/workflows/first-run.yml
+
+      # ───────────────────────────────
+      # 4.  Commit & push rename
+      # ───────────────────────────────
+      - name: 📦  Commit updated files
+        run: |
+          git config user.name  "template‑bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: initial project rename" || echo "No changes"
+          git push
